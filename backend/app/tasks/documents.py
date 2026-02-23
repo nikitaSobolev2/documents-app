@@ -88,11 +88,18 @@ class DocumentProcessingTask(Task):
             self.db.rollback()
             raise ValueError(f"DocumentProcessingTask row {task_row_id} not found")
 
-        if task_row.status != DocumentProcessingTaskStatus.PENDING and not is_retry:
-            self.db.rollback()
-            raise ValueError(
-                f"DocumentProcessingTask row {task_row_id} is not pending, it is {task_row.status}"
-            )
+        if is_retry:
+            if task_row.status not in [DocumentProcessingTaskStatus.PROCESSING, DocumentProcessingTaskStatus.FAILED]:
+                self.db.rollback()
+                raise ValueError(
+                    f"DocumentProcessingTask row {task_row_id} is not processing or failed, it is {task_row.status}"
+                )
+        else:
+            if task_row.status != DocumentProcessingTaskStatus.PENDING:
+                self.db.rollback()
+                raise ValueError(
+                    f"DocumentProcessingTask row {task_row_id} is not pending, it is {task_row.status}"
+                )
 
         if task_row.celery_task_id is not None and not is_retry:
             self.db.rollback()
