@@ -2,8 +2,8 @@ import httpx
 import pytest
 from typing import AsyncGenerator
 
-from backend.app.schemas.documents import DocumentStatus
-from backend.tests.documents_api.helpers import (
+from app.schemas.enums import DocumentProcessingTaskStatus
+from tests.documents_api.helpers import (
     create_document,
     delete_documents,
 )
@@ -18,14 +18,13 @@ async def created_document() -> AsyncGenerator[dict, None]:
 
     yield doc
 
-    await delete_documents([doc["id"]])
+    delete_documents([doc["document_id"]])
 
 
 def test_create_document_valid(created_document: dict):
-    assert isinstance(created_document["id"], int)
-    assert created_document["title"] == "test document title"
-    assert created_document["content"] == "test document content"
-    assert created_document["status"] == DocumentStatus.DRAFT.value
+    assert isinstance(created_document["document_id"], int)
+    assert isinstance(created_document["celery_task_id"], str)
+    assert created_document["status"] == DocumentProcessingTaskStatus.PENDING.value
 
 
 async def test_create_document_invalid():

@@ -6,16 +6,18 @@ from contextlib import asynccontextmanager
 from starlette.responses import JSONResponse
 
 from app.config import config
-from app.routers import v1_router
+from app.routers.v1 import v1_router
 from app.schemas.system import AppBaseResponse
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from app.database import engine
+    from app.redis import redis_client
 
     yield
 
+    redis_client.close()
     engine.dispose()
 
 app = FastAPI(title=config.APP_NAME, lifespan=lifespan)

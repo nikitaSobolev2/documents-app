@@ -2,8 +2,8 @@ import httpx
 import os
 from sqlalchemy import select
 
-from backend.app.database import get_db
-from backend.app.models.documents import Document as DocumentModel
+from app.database import get_db
+from app.models.documents import Document as DocumentModel, DocumentProcessingTask
 
 APP_URL = os.getenv("APP_URL")
 
@@ -47,12 +47,18 @@ def delete_documents(document_ids: list[int]) -> None:
     db = next(get_db())
     
     try:
-        query = select(DocumentModel).where(DocumentModel.id.in_(document_ids))
-        result = db.execute(query)
-        documents = result.scalars().all()
+        tasks = db.execute(
+            select(DocumentProcessingTask).where(DocumentProcessingTask.document_id.in_(document_ids))
+        ).scalars().all()
+        for task in tasks:
+            db.delete(task)
 
+        documents = db.execute(
+            select(DocumentModel).where(DocumentModel.id.in_(document_ids))
+        ).scalars().all()
         for document in documents:
             db.delete(document)
+
         db.commit()
     except Exception as e:
         db.rollback()

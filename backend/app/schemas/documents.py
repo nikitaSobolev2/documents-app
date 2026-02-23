@@ -1,12 +1,7 @@
-from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, field_validator
 
-
-class DocumentStatus(str, Enum):
-    DRAFT = "draft"
-    PUBLISHED = "published"
-    ARCHIVED = "archived"
+from app.schemas.enums import DocumentProcessingTaskStatus, DocumentStatus
 
 
 class DocumentCreate(BaseModel):
@@ -21,6 +16,12 @@ class DocumentCreate(BaseModel):
         return v
 
 
+class DocumentCreateResponse(BaseModel):
+    celery_task_id: str
+    document_id: int
+    status: DocumentProcessingTaskStatus
+
+
 class Document(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -28,5 +29,6 @@ class Document(BaseModel):
     title: str
     status: DocumentStatus = DocumentStatus.DRAFT
     content: Optional[str] = None
+
 
 type DocumentList = list[Document]

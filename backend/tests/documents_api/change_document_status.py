@@ -2,7 +2,7 @@ import httpx
 import pytest
 from typing import AsyncGenerator
 
-from backend.app.schemas.documents import DocumentStatus
+from app.schemas.documents import DocumentStatus
 from backend.tests.documents_api.helpers import (
     create_document,
     delete_documents,
