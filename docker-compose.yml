@@ -69,6 +69,15 @@ services:
       - ./backend:/app
     working_dir: /app
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
   db:
     image: postgres:16-alpine
     environment:
