@@ -1,7 +1,6 @@
 from celery import Celery
 from app.config import config
-from app.celery_app.config import celery_config
-from app.tasks.documents import DocumentProcessingTask
+from app.celery_app.celery_config import celery_config
 
 
 celery_app = Celery(config.APP_NAME)
@@ -16,4 +15,3 @@ celery_app.conf.update(
 )
 
 celery_app.autodiscover_tasks(["app.tasks"])
-celery_app.register_task(DocumentProcessingTask())

@@ -1,0 +1,15 @@
+.documents-list {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    gap: 1rem;
+
+    &__item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #000;
+        border-radius: 0.5rem;
+    }
+}

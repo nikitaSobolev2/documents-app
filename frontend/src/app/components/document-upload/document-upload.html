@@ -1,0 +1,23 @@
+<form [formGroup]="form" (ngSubmit)="createDocument()">
+  <div>
+    <label for="title">Title</label>
+    <input id="title" formControlName="title" />
+    @if (form.get('title')?.errors?.['required']) {
+      <p>Title is required</p>
+    }
+    @if (form.get('title')?.errors?.['minlength']) {
+      <p>Title must be at least 3 characters long</p>
+    }
+  </div>
+  <div>
+    <label for="content">Content</label>
+    <input id="content" formControlName="content" />
+  </div>
+  <button type="submit">Create Document</button>
+  @if (error()) {
+    <p>{{ error() }}</p>
+  }
+  @if (createdCeleryTaskId()) {
+    <p>Created Celery Task ID: {{ createdCeleryTaskId() }}</p>
+  }
+</form>

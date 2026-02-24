@@ -11,6 +11,7 @@ from app.models.documents import (
     DocumentProcessingTask as DocumentProcessingTaskModel,
 )
 from app.redis import redis_client
+from app.celery_app import celery_app
 
 
 class DocumentProcessingTask(Task):
@@ -89,7 +90,10 @@ class DocumentProcessingTask(Task):
             raise ValueError(f"DocumentProcessingTask row {task_row_id} not found")
 
         if is_retry:
-            if task_row.status not in [DocumentProcessingTaskStatus.PROCESSING, DocumentProcessingTaskStatus.FAILED]:
+            if task_row.status not in [
+                DocumentProcessingTaskStatus.PROCESSING,
+                DocumentProcessingTaskStatus.FAILED,
+            ]:
                 self.db.rollback()
                 raise ValueError(
                     f"DocumentProcessingTask row {task_row_id} is not processing or failed, it is {task_row.status}"
@@ -114,3 +118,6 @@ class DocumentProcessingTask(Task):
             )
 
         return True
+
+
+DocumentProcessingTask = celery_app.register_task(DocumentProcessingTask())

@@ -1,0 +1,11 @@
+<ul class="documents-list">
+    @for (document of documents(); track document.id) {
+        <li class="documents-list__item">
+            <span>Title: {{ document.title }}</span>
+            <span>Content: {{ document.content ?? 'No content' }}</span>
+            <span>Status: {{ document.status }}</span>
+        </li>
+    } @empty {
+        <li class="documents-list__item">No documents found</li>
+    }
+</ul>

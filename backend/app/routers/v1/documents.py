@@ -16,8 +16,8 @@ from app.models.documents import (
     Document,
     DocumentProcessingTask as DocumentProcessingTaskModel,
 )
-from app.tasks.documents import DocumentProcessingTask
 from app.redis import get_redis
+from app.tasks.documents import DocumentProcessingTask
 
 
 documents_router = APIRouter(prefix="/documents", tags=["documents"])
@@ -32,41 +32,6 @@ def get_document_list(limit: int = 20, offset: int = 0, db: Session = Depends(ge
     documents = db.query(Document).offset(offset).limit(limit).all()
     return AppBaseResponse[DocumentList](
         status=http_status.HTTP_200_OK, message="success", data=documents
-    )
-
-
-@documents_router.post(
-    "/",
-    status_code=http_status.HTTP_201_CREATED,
-    response_model=AppBaseResponse[DocumentCreateResponse],
-)
-def create_document(document: DocumentCreate, db: Session = Depends(get_db)):
-    new_document = Document(title=document.title, content=document.content)
-    db.add(new_document)
-    db.flush()
-
-    document_processing_task = DocumentProcessingTaskModel(document_id=new_document.id)
-    db.add(document_processing_task)
-    db.commit()
-
-    try:
-        celery_result = DocumentProcessingTask.delay(document_processing_task.id)
-    except Exception as e:
-        document_processing_task.status = DocumentProcessingTaskStatus.FAILED
-        document_processing_task.error = str(e)
-        db.commit()
-        raise HTTPException(
-            status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={"message": "Message broker unavailable, try again later"},
-        )
-
-    data = DocumentCreateResponse(
-        celery_task_id=celery_result.id,
-        document_id=new_document.id,
-        status=DocumentProcessingTaskStatus.PENDING,
-    )
-    return AppBaseResponse[DocumentCreateResponse](
-        status=http_status.HTTP_201_CREATED, message="success", data=data
     )
 
 
@@ -106,6 +71,41 @@ def get_document(
 
     return AppBaseResponse[DocumentSchema](
         status=http_status.HTTP_200_OK, message="success", data=db_document
+    )
+
+
+@documents_router.post(
+    "/",
+    status_code=http_status.HTTP_201_CREATED,
+    response_model=AppBaseResponse[DocumentCreateResponse],
+)
+def create_document(document: DocumentCreate, db: Session = Depends(get_db)):
+    new_document = Document(title=document.title, content=document.content)
+    db.add(new_document)
+    db.flush()
+
+    task_row = DocumentProcessingTaskModel(document_id=new_document.id)
+    db.add(task_row)
+    db.commit()
+
+    try:
+        celery_result = DocumentProcessingTask.delay(task_row.id)
+    except Exception as e:
+        task_row.status = DocumentProcessingTaskStatus.FAILED
+        task_row.error = str(e)
+        db.commit()
+        raise HTTPException(
+            status_code=http_status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"message": "Message broker unavailable, try again later"},
+        )
+
+    data = DocumentCreateResponse(
+        celery_task_id=celery_result.id,
+        document_id=new_document.id,
+        status=DocumentProcessingTaskStatus.PENDING,
+    )
+    return AppBaseResponse[DocumentCreateResponse](
+        status=http_status.HTTP_201_CREATED, message="success", data=data
     )
 
 
